@@ -5,6 +5,8 @@ import io.github.vivianagh.jobberwocky.domain.model.Job;
 import io.github.vivianagh.jobberwocky.domain.model.JobSearchCriteria;
 import io.github.vivianagh.jobberwocky.infrastructure.web.dto.JobRequest;
 import io.github.vivianagh.jobberwocky.infrastructure.web.dto.JobResponse;
+import io.github.vivianagh.jobberwocky.infrastructure.web.dto.SearchParams;
+import io.github.vivianagh.jobberwocky.infrastructure.web.mapper.JobMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.Set;
 public class JobController {
 
     private final JobService jobService;
+    private final JobMapper jobMapper;
 
     @PostMapping
     public ResponseEntity<JobResponse> create(@Valid @RequestBody JobRequest request) {
@@ -51,38 +54,28 @@ public class JobController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JobResponse>> search(
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String country,
-            @RequestParam(required = false) BigDecimal minSalary,
-            @RequestParam(required = false) BigDecimal maxSalary,
-            @RequestParam(required = false) String skill
-    ) {
-        JobSearchCriteria criteria = JobSearchCriteria.builder()
-                .title(title)
-                .country(country)
-                .minSalary(minSalary)
-                .maxSalary(maxSalary)
-                .skill(skill)
-                .build();
+    public ResponseEntity<List<JobResponse>> search(SearchParams params) {
+        var criteria = toCriteria(params);
 
-        List<Job> jobs = jobService.search(criteria);
-
-        List<JobResponse> out = jobs.stream().map(j ->
-                JobResponse.builder()
-                        .id(j.getId())
-                        .title(j.getTitle())
-                        .description(j.getDescription())
-                        .company(j.getCompany())
-                        .country(j.getCountry())
-                        .city(j.getCity())
-                        .salary(j.getSalary())
-                        .skills(j.getSkills())
-                        .source(j.getSource())
-                        .createdAt(j.getCreatedAt())
-                        .build()
-        ).toList();
-
+        var out = jobService.search(criteria)
+                .stream()
+                .map(jobMapper::toResponse)
+                .toList();
         return ResponseEntity.ok(out);
+    }
+
+    private JobSearchCriteria toCriteria(SearchParams p) {
+        return JobSearchCriteria.builder()
+                .title(p.title())
+                .country(p.country())
+                .minSalary(parseBigDecimal(p.minSalary()))
+                .maxSalary(parseBigDecimal(p.maxSalary()))
+                .skill(p.skill())
+                .build();
+    }
+
+    private BigDecimal parseBigDecimal(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        return new BigDecimal(raw.trim());
     }
 }
