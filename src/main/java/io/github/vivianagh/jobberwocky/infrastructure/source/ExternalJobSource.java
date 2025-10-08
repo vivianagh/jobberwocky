@@ -8,12 +8,14 @@ import io.github.vivianagh.jobberwocky.infrastructure.adapter.ExternalJobRespons
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(prefix = "sources.external", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ExternalJobSource implements JobSource {
 
     private final ExternalJobApiClient apiClient;

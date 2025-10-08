@@ -5,6 +5,7 @@ import io.github.vivianagh.jobberwocky.domain.model.Job;
 import io.github.vivianagh.jobberwocky.domain.model.JobSearchCriteria;
 import io.github.vivianagh.jobberwocky.infrastructure.web.dto.JobRequest;
 import io.github.vivianagh.jobberwocky.infrastructure.web.dto.JobResponse;
+import io.github.vivianagh.jobberwocky.infrastructure.web.dto.PageResponse;
 import io.github.vivianagh.jobberwocky.infrastructure.web.dto.SearchParams;
 import io.github.vivianagh.jobberwocky.infrastructure.web.mapper.JobMapper;
 import jakarta.validation.Valid;
@@ -27,41 +28,27 @@ public class JobController {
 
     @PostMapping
     public ResponseEntity<JobResponse> create(@Valid @RequestBody JobRequest request) {
-        Job toSave = Job.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .company(request.getCompany())
-                .country(request.getCompany())
-                .city(request.getCity())
-                .salary(request.getSalary())
-                .skills(request.getSkills())
-                .build();
-        Job saved = jobService.create(toSave);
-
-        JobResponse body = JobResponse.builder()
-                .id(saved.getId())
-                .title(saved.getTitle())
-                .description(saved.getDescription())
-                .company(saved.getCompany())
-                .country(saved.getCountry())
-                .city(saved.getCity())
-                .salary(saved.getSalary())
-                .skills(saved.getSkills())
-                .source(saved.getSource())
-                .createdAt(saved.getCreatedAt())
-                .build();
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        Job saved = jobService.create(toDomain(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(jobMapper.toResponse(saved));
     }
 
     @GetMapping
-    public ResponseEntity<List<JobResponse>> search(SearchParams params) {
+    public ResponseEntity<PageResponse<JobResponse>> search(SearchParams params) {
         var criteria = toCriteria(params);
 
-        var out = jobService.search(criteria)
-                .stream()
+        var page = params.page();
+        var size = params.size();
+        var sort = params.sort();
+
+        var pageResult = jobService.searchPaged(criteria, page, size, sort);
+
+        var mapped = pageResult.content().stream()
                 .map(jobMapper::toResponse)
                 .toList();
-        return ResponseEntity.ok(out);
+
+        return ResponseEntity.ok(
+                new PageResponse<>(mapped, pageResult.page(), pageResult.size(), pageResult.total())
+        );
     }
 
     private JobSearchCriteria toCriteria(SearchParams p) {
@@ -78,4 +65,17 @@ public class JobController {
         if (raw == null || raw.isBlank()) return null;
         return new BigDecimal(raw.trim());
     }
+
+    private Job toDomain(JobRequest request) {
+        return Job.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .company(request.getCompany())
+                .country(request.getCountry())
+                .city(request.getCity())
+                .salary(request.getSalary())
+                .skills(request.getSkills())
+                .build();
+    }
+
 }

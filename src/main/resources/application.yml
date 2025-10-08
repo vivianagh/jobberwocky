@@ -35,3 +35,15 @@ logging:
     org.springframework: INFO
     io.github.vivianagh.jobberwocky: DEBUG
 
+external:
+  enabled: false
+  base-url: http://localhost:8081
+  connect-timeout-ms: 2000
+  read-timeout-ms: 3000
+
+sources:
+  internal:
+    enabled: true
+  external:
+    enabled: true
+  prefer-internal: true

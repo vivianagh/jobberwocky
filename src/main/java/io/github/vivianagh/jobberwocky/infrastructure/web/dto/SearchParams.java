@@ -8,5 +8,8 @@ public record SearchParams(
         @Nullable String country,
         @Nullable String minSalary,
         @Nullable String maxSalary,
-        @Nullable String skill
+        @Nullable String skill,
+        Integer page,   // 0-based
+        Integer size,   // default 20
+        String sort     // e.g. "salary,desc"
 ) {}

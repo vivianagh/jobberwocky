@@ -6,6 +6,7 @@ import io.github.vivianagh.jobberwocky.domain.port.JobSource;
 import io.github.vivianagh.jobberwocky.infrastructure.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import jakarta.persistence.criteria.Predicate;
@@ -16,6 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(prefix = "sources.internal", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class InternalJobSource implements JobSource {
 
     private final JobRepository jobRepository;
